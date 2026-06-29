@@ -8,6 +8,7 @@ import MedidorPassword from "../components/ui/MedidorPassword"
 import BotonMostrarPassword from "../components/ui/BotonMostrarPassword"
 import { theme } from "../config/theme"
 import { regionesEcuador, provinciasPorRegion } from "../config/ecuador"
+import registerBg from "../assets/register-bg.jpg"
 
 // ---- Modal Términos y Condiciones ----
 const ModalTerminos = ({ onCerrar }) => (
@@ -325,10 +326,24 @@ const Register = () => {
                 </div>
             </div>
 
-            {/* Panel derecho - marca */}
-            <div className="w-full sm:w-1/2 h-1/3 sm:h-screen bg-blue-900 flex flex-col justify-center items-center text-center px-8 order-first sm:order-last">
-                <Logo size="lg" light linkToHome />
-                <p className="text-blue-100 mt-6 text-lg max-w-sm">{theme.descripcion}</p>
+            {/* Panel derecho - foto con overlay */}
+            <div className="relative w-full sm:w-1/2 h-1/3 sm:h-screen flex flex-col justify-center items-center text-center px-8 order-first sm:order-last overflow-hidden">
+                <img
+                    src={registerBg}
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 w-full h-full object-cover object-center"
+                />
+                <div className="absolute inset-0" style={{ background: "linear-gradient(225deg, rgba(15,23,42,0.65) 0%, rgba(30,58,138,0.30) 55%, rgba(30,58,138,0.08) 100%)" }} />
+                <div className="absolute right-0 top-0 bottom-0 w-1.5 flex flex-col">
+                    <div className="flex-1 bg-yellow-400" />
+                    <div className="flex-[0.5] bg-blue-700" />
+                    <div className="flex-[0.5] bg-red-600" />
+                </div>
+                <div className="relative z-10">
+                    <Logo size="lg" light linkToHome />
+                    <p className="text-blue-100 mt-6 text-lg max-w-sm">{theme.descripcion}</p>
+                </div>
             </div>
         </div>
     )
