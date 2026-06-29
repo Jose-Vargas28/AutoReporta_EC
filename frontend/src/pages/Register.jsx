@@ -97,6 +97,7 @@ const Register = () => {
     const [correoRegistrado, setCorreoRegistrado] = useState("")
     const [reenviando, setReenviando] = useState(false)
     const [msgReenvio, setMsgReenvio] = useState("")
+    const [regionSeleccionada, setRegionSeleccionada] = useState("")
     const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm()
     const { fetchDataBackend } = useFetch()
     const passwordActual = watch("password")
