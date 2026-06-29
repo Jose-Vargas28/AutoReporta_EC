@@ -22,6 +22,7 @@ const origenesPermitidos = [
 ].filter(Boolean)
 
 app.set("port", process.env.PORT || 5000)
+app.set("trust proxy", 1)
 app.use(cors({
     origin: (origin, callback) => {
         // Permitir peticiones sin origin (Postman, curl, herramientas de desarrollo)
