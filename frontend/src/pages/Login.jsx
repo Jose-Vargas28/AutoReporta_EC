@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { Link, useNavigate } from "react-router"
-import { ToastContainer } from "react-toastify"
+import { ToastContainer, toast } from "react-toastify"
+import axios from "axios"
 import useFetch from "../hooks/useFetch"
 import storeAuth from "../context/storeAuth"
 import Logo from "../components/Logo"
@@ -26,14 +27,22 @@ const Login = () => {
         setCuentaNoConfirmada(false)
         setMsgReenvio("")
         const url = `${import.meta.env.VITE_BACKEND_URL}/login`
-        const response = await fetchDataBackend(url, data, "POST")
-        if (response?.token) {
-            setToken(response.token)
-            setRol(response.rol)
-            navigate("/dashboard")
-        } else if (response?.msg?.includes("confirmar")) {
-            setCorreoIngresado(data.email)
-            setCuentaNoConfirmada(true)
+        try {
+            const res = await axios.post(url, data)
+            if (res.data?.token) {
+                setToken(res.data.token)
+                setRol(res.data.rol)
+                navigate("/dashboard")
+            }
+        } catch (err) {
+            const msg = err.response?.data?.msg || ""
+            if (msg.toLowerCase().includes("confirmar")) {
+                setCorreoIngresado(data.email)
+                setCuentaNoConfirmada(true)
+                toast.error(msg)
+            } else {
+                toast.error(msg || "No se pudo conectar al servidor")
+            }
         }
     }
 
