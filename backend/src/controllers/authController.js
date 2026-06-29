@@ -50,6 +50,29 @@ export const registro = async (req, res) => {
     }
 }
 
+// REENVIAR CORREO DE CONFIRMACIÓN
+export const reenviarConfirmacion = async (req, res) => {
+    try {
+        const { email } = req.body
+        if (!email) return res.status(400).json({ msg: "El correo es obligatorio" })
+
+        const user = await User.findOne({ email })
+        if (!user) return res.status(404).json({ msg: "No existe una cuenta con ese correo" })
+        if (user.confirmEmail) return res.status(400).json({ msg: "Esta cuenta ya fue confirmada. Puedes iniciar sesión." })
+        if (user.baneado) return res.status(403).json({ msg: "Tu cuenta ha sido suspendida." })
+
+        // Generar nuevo token y extender expiración 1 hora
+        const token = user.crearToken()
+        await user.save()
+        await sendMailToConfirm(email, token)
+
+        res.status(200).json({ msg: "Correo de confirmación reenviado. Revisa tu bandeja de entrada." })
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ msg: "Error en el servidor" })
+    }
+}
+
 // CONFIRMAR EMAIL
 export const confirmarEmail = async (req, res) => {
     try {

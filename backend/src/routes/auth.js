@@ -3,6 +3,7 @@ import rateLimit from "express-rate-limit"
 import {
     registro,
     confirmarEmail,
+    reenviarConfirmacion,
     login,
     loginGoogle,
     perfil,
@@ -51,9 +52,19 @@ const contactoLimiter = rateLimit({
     message: { msg: "Has enviado demasiados mensajes. Intenta nuevamente en una hora." }
 })
 
+// Rate limiter reenvío confirmación: 3 intentos cada hora por IP
+const reenvioLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 3,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { msg: "Has solicitado demasiados reenvíos. Intenta nuevamente en una hora." }
+})
+
 // Públicas
 router.post("/registro", registroLimiter, registro)
 router.get("/confirmar/:token", confirmarEmail)
+router.post("/reenviar-confirmacion", reenvioLimiter, reenviarConfirmacion)
 router.post("/login", loginLimiter, login)
 router.post("/login-google", loginGoogle)
 router.post("/recuperarpassword", recuperacionLimiter, recuperarPassword)

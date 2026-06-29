@@ -8,7 +8,6 @@ import MedidorPassword from "../components/ui/MedidorPassword"
 import BotonMostrarPassword from "../components/ui/BotonMostrarPassword"
 import { theme } from "../config/theme"
 import { regionesEcuador, provinciasPorRegion } from "../config/ecuador"
-import registerBg from "../assets/register-bg.jpg"
 
 // ---- Modal Términos y Condiciones ----
 const ModalTerminos = ({ onCerrar }) => (
@@ -94,7 +93,10 @@ const Register = () => {
     const [showPassword, setShowPassword] = useState(false)
     const [aceptaTerminos, setAceptaTerminos] = useState(false)
     const [modalTerminos, setModalTerminos] = useState(false)
-    const [regionSeleccionada, setRegionSeleccionada] = useState("")
+    const [registroExitoso, setRegistroExitoso] = useState(false)
+    const [correoRegistrado, setCorreoRegistrado] = useState("")
+    const [reenviando, setReenviando] = useState(false)
+    const [msgReenvio, setMsgReenvio] = useState("")
     const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm()
     const { fetchDataBackend } = useFetch()
     const passwordActual = watch("password")
@@ -108,8 +110,26 @@ const Register = () => {
         const url = `${import.meta.env.VITE_BACKEND_URL}/registro`
         const response = await fetchDataBackend(url, payload, "POST")
         if (response) {
-            setTimeout(() => navigate("/login"), 2000)
+            setCorreoRegistrado(data.email)
+            setRegistroExitoso(true)
         }
+    }
+
+    const handleReenviar = async () => {
+        setReenviando(true)
+        setMsgReenvio("")
+        try {
+            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/reenviar-confirmacion`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: correoRegistrado })
+            })
+            const data = await res.json()
+            setMsgReenvio(data.msg)
+        } catch {
+            setMsgReenvio("Error al reenviar. Intenta más tarde.")
+        }
+        setReenviando(false)
     }
 
     const inputClass = "block w-full rounded-md border border-slate-300 focus:border-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-700 py-2 px-3 text-slate-700"
@@ -119,9 +139,37 @@ const Register = () => {
             <ToastContainer />
             {modalTerminos && <ModalTerminos onCerrar={() => setModalTerminos(false)} />}
 
-            {/* Panel izquierdo - formulario */}
+            {/* Panel izquierdo - formulario o pantalla de éxito */}
             <div className="w-full sm:w-1/2 h-screen bg-white flex justify-center items-start overflow-y-auto py-8">
                 <div className="md:w-4/5 sm:w-full px-8">
+
+                {registroExitoso ? (
+                    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+                        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                            <span className="text-3xl">📧</span>
+                        </div>
+                        <h2 className="text-2xl font-bold text-slate-800 mb-2">¡Revisa tu correo!</h2>
+                        <p className="text-slate-500 mb-2">
+                            Enviamos un enlace de confirmación a:
+                        </p>
+                        <p className="font-semibold text-blue-900 mb-6">{correoRegistrado}</p>
+                        <p className="text-slate-400 text-sm mb-8">
+                            Haz clic en el enlace del correo para activar tu cuenta. Si no lo ves, revisa la carpeta de spam.
+                        </p>
+                        <button type="button" onClick={handleReenviar} disabled={reenviando}
+                            className="px-6 py-2 border-2 border-blue-900 text-blue-900 font-semibold rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-60 mb-3">
+                            {reenviando ? "Reenviando..." : "¿No llegó? Reenviar correo"}
+                        </button>
+                        {msgReenvio && (
+                            <p className="text-sm text-green-700 font-medium mt-1">{msgReenvio}</p>
+                        )}
+                        <button type="button" onClick={() => navigate("/login")}
+                            className="mt-4 text-sm text-slate-400 hover:text-blue-700 transition-colors">
+                            ← Ir al inicio de sesión
+                        </button>
+                    </div>
+                ) : (
+                    <>
                     <h1 className="text-3xl font-bold mb-2 text-slate-700">Crear cuenta</h1>
                     <p className="text-slate-400 mb-8 text-sm">Regístrate para reportar y consultar fallas vehiculares</p>
 
@@ -271,29 +319,15 @@ const Register = () => {
                     <p className="mt-3 text-center text-sm">
                         <Link to="/" className="text-slate-400 hover:text-slate-600 hover:underline">← Volver al inicio</Link>
                     </p>
+                    </>
+                )}
                 </div>
             </div>
 
-            {/* Panel derecho - foto con overlay */}
-            <div className="relative w-full sm:w-1/2 h-1/3 sm:h-screen flex flex-col justify-center items-center text-center px-8 order-first sm:order-last overflow-hidden">
-                <img
-                    src={registerBg}
-                    alt=""
-                    aria-hidden="true"
-                    className="absolute inset-0 w-full h-full object-cover object-center"
-                />
-                {/* Overlay sutil: oscuro arriba/derecha para que el texto sea legible, transparente hacia el centro */}
-                <div className="absolute inset-0" style={{ background: "linear-gradient(225deg, rgba(15,23,42,0.65) 0%, rgba(30,58,138,0.30) 55%, rgba(30,58,138,0.08) 100%)" }} />
-                {/* Franja bandera Ecuador (vertical, lado derecho) */}
-                <div className="absolute right-0 top-0 bottom-0 w-1.5 flex flex-col">
-                    <div className="flex-1 bg-yellow-400" />
-                    <div className="flex-[0.5] bg-blue-700" />
-                    <div className="flex-[0.5] bg-red-600" />
-                </div>
-                <div className="relative z-10">
-                    <Logo size="lg" light linkToHome />
-                    <p className="text-blue-100 mt-6 text-lg max-w-sm">{theme.descripcion}</p>
-                </div>
+            {/* Panel derecho - marca */}
+            <div className="w-full sm:w-1/2 h-1/3 sm:h-screen bg-blue-900 flex flex-col justify-center items-center text-center px-8 order-first sm:order-last">
+                <Logo size="lg" light linkToHome />
+                <p className="text-blue-100 mt-6 text-lg max-w-sm">{theme.descripcion}</p>
             </div>
         </div>
     )

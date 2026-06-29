@@ -12,20 +12,46 @@ import loginBg from "../assets/login-bg.jpg"
 const Login = () => {
     const navigate = useNavigate()
     const [showPassword, setShowPassword] = useState(false)
-    const { register, handleSubmit, formState: { errors } } = useForm()
+    const [cuentaNoConfirmada, setCuentaNoConfirmada] = useState(false)
+    const [correoIngresado, setCorreoIngresado] = useState("")
+    const [reenviando, setReenviando] = useState(false)
+    const [msgReenvio, setMsgReenvio] = useState("")
+    const { register, handleSubmit, watch, formState: { errors } } = useForm()
     const { fetchDataBackend } = useFetch()
     const { setToken, setRol } = storeAuth()
     const googleBtnRef = useRef(null)
     const clientIdGoogle = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
     const onSubmit = async (data) => {
+        setCuentaNoConfirmada(false)
+        setMsgReenvio("")
         const url = `${import.meta.env.VITE_BACKEND_URL}/login`
         const response = await fetchDataBackend(url, data, "POST")
         if (response?.token) {
             setToken(response.token)
             setRol(response.rol)
             navigate("/dashboard")
+        } else if (response?.msg?.includes("confirmar")) {
+            setCorreoIngresado(data.email)
+            setCuentaNoConfirmada(true)
         }
+    }
+
+    const handleReenviar = async () => {
+        setReenviando(true)
+        setMsgReenvio("")
+        try {
+            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/reenviar-confirmacion`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: correoIngresado })
+            })
+            const data = await res.json()
+            setMsgReenvio(data.msg)
+        } catch {
+            setMsgReenvio("Error al reenviar. Intenta más tarde.")
+        }
+        setReenviando(false)
     }
 
     const manejarRespuestaGoogle = async (respuestaGoogle) => {
@@ -82,7 +108,7 @@ const Login = () => {
                     className="absolute inset-0 w-full h-full object-cover object-center"
                 />
                 {/* Overlay sutil: oscuro arriba/izquierda para que el texto sea legible, transparente hacia el centro */}
-                <div className="absolute inset-0 bg-gradient-to-br from-slate-900/75 via-blue-950/45 to-blue-900/20" />
+                <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(15,23,42,0.65) 0%, rgba(30,58,138,0.30) 55%, rgba(30,58,138,0.08) 100%)" }} />
                 {/* Franja bandera Ecuador (vertical, lado izquierdo) */}
                 <div className="absolute left-0 top-0 bottom-0 w-1.5 flex flex-col">
                     <div className="flex-1 bg-yellow-400" />
@@ -142,6 +168,21 @@ const Login = () => {
                             Iniciar sesión
                         </button>
                     </form>
+
+                    {/* Aviso cuenta no confirmada + botón reenviar */}
+                    {cuentaNoConfirmada && (
+                        <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-center">
+                            <p className="text-amber-800 text-sm font-semibold mb-1">⚠️ Cuenta no confirmada</p>
+                            <p className="text-amber-700 text-xs mb-3">
+                                Revisa tu bandeja de entrada en <strong>{correoIngresado}</strong>. Si no llegó el correo puedes reenviarlo.
+                            </p>
+                            <button type="button" onClick={handleReenviar} disabled={reenviando}
+                                className="px-4 py-1.5 border border-amber-500 text-amber-700 text-sm font-semibold rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-60">
+                                {reenviando ? "Reenviando..." : "Reenviar correo de confirmación"}
+                            </button>
+                            {msgReenvio && <p className="text-xs text-green-700 font-medium mt-2">{msgReenvio}</p>}
+                        </div>
+                    )}
 
                     {clientIdGoogle && (
                         <>
