@@ -3,15 +3,12 @@ import dotenv from "dotenv"
 dotenv.config()
 
 const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
+    host: "smtp.resend.com",
+    port: 465,
+    secure: true,
     auth: {
-        user: process.env.USER_MAILTRAP,
-        pass: process.env.PASS_MAILTRAP
-    },
-    tls: {
-        rejectUnauthorized: false
+        user: "resend",
+        pass: process.env.RESEND_API_KEY
     }
 })
 
@@ -23,7 +20,7 @@ const BASE_URL = (process.env.URL_FRONTEND || "http://localhost:5173").replace(/
 const sendMailToConfirm = async (userMail, token) => {
     try {
         const info = await transporter.sendMail({
-            from: `"${process.env.NOMBRE_SISTEMA || "AutoReporta EC"}" <${process.env.USER_MAILTRAP}>`,
+            from: `"AutoReporta EC" <onboarding@resend.dev>`,
             to: userMail,
             subject: "Confirma tu cuenta - AutoReporta EC 🚗",
             html: `
@@ -56,7 +53,7 @@ const sendMailToConfirm = async (userMail, token) => {
 // Recuperación de contraseña
 const sendMailToRecovery = async (userMail, token) => {
     const info = await transporter.sendMail({
-        from: `"AutoReporta EC" <${process.env.USER_MAILTRAP}>`,
+        from: `"AutoReporta EC" <onboarding@resend.dev>`,
         to: userMail,
         subject: "Recupera tu contraseña - AutoReporta EC 🔑",
         html: `
@@ -87,7 +84,7 @@ const sendMailToRecovery = async (userMail, token) => {
 const sendMailReporteVerificado = async (userMail, userName, vehiculo, falla, reporteId) => {
     try {
         const info = await transporter.sendMail({
-            from: `"AutoReporta EC" <${process.env.USER_MAILTRAP}>`,
+            from: `"AutoReporta EC" <onboarding@resend.dev>`,
             to: userMail,
             subject: "✅ Tu reporte fue validado - AutoReporta EC",
             html: `
@@ -128,7 +125,7 @@ const sendMailReporteVerificado = async (userMail, userName, vehiculo, falla, re
 const sendMailReporteInvalidado = async (userMail, userName, vehiculo, falla, motivo) => {
     try {
         const info = await transporter.sendMail({
-            from: `"AutoReporta EC" <${process.env.USER_MAILTRAP}>`,
+            from: `"AutoReporta EC" <onboarding@resend.dev>`,
             to: userMail,
             subject: "⚠️ La validación de tu reporte fue retirada - AutoReporta EC",
             html: `
@@ -168,7 +165,7 @@ const sendMailReporteInvalidado = async (userMail, userName, vehiculo, falla, mo
 const sendMailReporteEliminado = async (userMail, userName, vehiculo, falla, motivo) => {
     try {
         const info = await transporter.sendMail({
-            from: `"AutoReporta EC" <${process.env.USER_MAILTRAP}>`,
+            from: `"AutoReporta EC" <onboarding@resend.dev>`,
             to: userMail,
             subject: "❌ Tu reporte fue eliminado - AutoReporta EC",
             html: `
@@ -209,7 +206,7 @@ const sendMailReporteEliminado = async (userMail, userName, vehiculo, falla, mot
 const sendMailReporteDevuelto = async (userMail, userName, vehiculo, falla, observacion, reporteId) => {
     try {
         const info = await transporter.sendMail({
-            from: `"AutoReporta EC" <${process.env.USER_MAILTRAP}>`,
+            from: `"AutoReporta EC" <onboarding@resend.dev>`,
             to: userMail,
             subject: "↩️ Tu reporte necesita correcciones - AutoReporta EC",
             html: `
@@ -256,7 +253,7 @@ const sendMailReporteDevuelto = async (userMail, userName, vehiculo, falla, obse
 const sendMailContacto = async ({ nombre, correo, asunto, mensaje }) => {
     try {
         const info = await transporter.sendMail({
-            from: `"AutoReporta EC" <${process.env.USER_MAILTRAP}>`,
+            from: `"AutoReporta EC" <onboarding@resend.dev>`,
             to: process.env.USER_MAILTRAP,
             replyTo: correo,
             subject: `📬 Contacto: ${asunto} — AutoReporta EC`,
