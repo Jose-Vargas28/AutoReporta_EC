@@ -1,0 +1,20 @@
+# Dependencias
+node_modules/
+**/node_modules/
+
+# Variables de entorno 
+.env
+**/.env
+.env.local
+.env.production
+
+# Archivos temporales de subida
+uploads/*
+!uploads/.gitkeep
+
+# Build del frontend
+dist/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db

@@ -1,0 +1,4 @@
+Coloca aquí tu logo cuando lo tengas (por ejemplo: logo.png)
+
+Luego ve al archivo: src/components/Logo.jsx
+y descomenta la línea de importación del logo, ajustando el nombre del archivo.
