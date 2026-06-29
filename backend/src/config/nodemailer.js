@@ -3,10 +3,15 @@ import dotenv from "dotenv"
 dotenv.config()
 
 const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
     auth: {
         user: process.env.USER_MAILTRAP,
         pass: process.env.PASS_MAILTRAP
+    },
+    tls: {
+        rejectUnauthorized: false
     }
 })
 
@@ -252,7 +257,7 @@ const sendMailContacto = async ({ nombre, correo, asunto, mensaje }) => {
     try {
         const info = await transporter.sendMail({
             from: `"AutoReporta EC" <${process.env.USER_MAILTRAP}>`,
-            to: process.env.ADMIN_CORREO_CONTACTO || process.env.USER_MAILTRAP,
+            to: process.env.USER_MAILTRAP,
             replyTo: correo,
             subject: `📬 Contacto: ${asunto} — AutoReporta EC`,
             html: `
