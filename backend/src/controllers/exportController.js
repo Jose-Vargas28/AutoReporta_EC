@@ -95,12 +95,18 @@ const fechaCorta = (f) =>
 // =============================================================
 export const exportarReportesExcel = async (req, res) => {
     try {
-        const { busqueda, gravedad } = req.query
+        const { busqueda, gravedad, marca, anio } = req.query
         const filtro = { activo: true, validado: true }
         if (gravedad) filtro.gravedad = gravedad
 
         let reportes = await popReporte(Reporte.find(filtro)).sort({ createdAt: -1 })
 
+        if (marca) {
+            reportes = reportes.filter(r => r.vehiculo?.marca === marca)
+        }
+        if (anio) {
+            reportes = reportes.filter(r => r.vehiculo?.anio === Number(anio))
+        }
         if (busqueda) {
             const b = busqueda.toLowerCase()
             reportes = reportes.filter(r =>

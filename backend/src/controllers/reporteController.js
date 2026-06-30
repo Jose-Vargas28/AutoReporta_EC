@@ -74,7 +74,7 @@ export const obtenerReportes = async (req, res) => {
         const pagina = parseInt(req.query.pagina) || 1
         const limite = 10
         const skip = (pagina - 1) * limite
-        const { busqueda, gravedad, vehiculo } = req.query
+        const { busqueda, gravedad, vehiculo, marca, anio, orden } = req.query
 
         // Construir filtro dinámico
         let filtro = { activo: true, validado: true }
@@ -82,6 +82,17 @@ export const obtenerReportes = async (req, res) => {
 
         // Filtro directo por ID de vehículo (viene desde CatalogoVehiculos)
         if (vehiculo) filtro.vehiculo = vehiculo
+
+        // Filtro por marca y/o año del vehículo — resuelve IDs de vehículos que coincidan
+        if (!vehiculo && (marca || anio)) {
+            const Vehiculo = (await import("../models/Vehiculo.js")).default
+            const filtroVeh = {}
+            if (marca) filtroVeh.marca = marca
+            if (anio) filtroVeh.anio = Number(anio)
+            const vehiculosMatch = await Vehiculo.find(filtroVeh).select("_id")
+            const idsVeh = vehiculosMatch.map(v => v._id)
+            filtro.vehiculo = filtro.vehiculo ? filtro.vehiculo : { $in: idsVeh }
+        }
 
         // Si hay búsqueda, filtrar por campos del populate
         if (busqueda && !vehiculo) {
@@ -101,9 +112,12 @@ export const obtenerReportes = async (req, res) => {
             ]
         }
 
+        // Orden dinámico — por defecto más reciente primero
+        const ordenamiento = orden === "antiguo" ? { createdAt: 1 } : { createdAt: -1 }
+
         const total = await Reporte.countDocuments(filtro)
         const reportes = await popReporte(
-            Reporte.find(filtro).sort({ createdAt: -1 }).skip(skip).limit(limite)
+            Reporte.find(filtro).sort(ordenamiento).skip(skip).limit(limite)
         )
 
         res.status(200).json({
@@ -421,43 +435,29 @@ export const estadisticas = async (req, res) => {
         const modeloMap = {}
         const fallaMap = {}
         const gravedadMap = { baja: 0, media: 0, alta: 0 }
-        const regionMap = {}
-        const mesMap = {}
 
         reportes.forEach(r => {
             const marca = r.vehiculo?.marca || "N/D"
             const modelo = r.vehiculo ? `${r.vehiculo.marca} ${r.vehiculo.modelo}` : "N/D"
             const falla = r.falla?.nombre || "N/D"
-            const region = r.usuario?.region || "No especificada"
-            const fecha = new Date(r.createdAt)
-            const mes = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}`
 
             marcaMap[marca] = (marcaMap[marca] || 0) + 1
             modeloMap[modelo] = (modeloMap[modelo] || 0) + 1
             fallaMap[falla] = (fallaMap[falla] || 0) + 1
-            regionMap[region] = (regionMap[region] || 0) + 1
-            mesMap[mes] = (mesMap[mes] || 0) + 1
             if (r.gravedad) gravedadMap[r.gravedad] = (gravedadMap[r.gravedad] || 0) + 1
         })
 
-        const aArray = (obj, limit = 10) => Object.entries(obj)
+        const aArray = (obj) => Object.entries(obj)
             .map(([k, v]) => ({ _id: k, total: v }))
             .sort((a, b) => b.total - a.total)
-            .slice(0, limit)
-
-        const porMesOrdenado = Object.entries(mesMap)
-            .map(([k, v]) => ({ _id: k, total: v }))
-            .sort((a, b) => a._id.localeCompare(b._id))
-            .slice(-12) // últimos 12 meses
+            .slice(0, 10)
 
         res.status(200).json({
             total: reportes.length,
             porMarca: aArray(marcaMap),
             porModelo: aArray(modeloMap),
             porTipoFalla: aArray(fallaMap),
-            porGravedad: Object.entries(gravedadMap).map(([k, v]) => ({ _id: k, total: v })),
-            porRegion: aArray(regionMap, 20),
-            porMes: porMesOrdenado
+            porGravedad: Object.entries(gravedadMap).map(([k, v]) => ({ _id: k, total: v }))
         })
 
     } catch (error) {
@@ -513,13 +513,12 @@ export const tendencias = async (req, res) => {
                 .sort((a, b) => a.anio - b.anio)
         }))
 
-        // Lista de modelos disponibles para el selector — incluye _id para ficha PDF
-        const modelosDisponibles = [...new Map(
-            vehiculos.map(v => [
-                `${v.marca}|${v.modelo}`,
-                { marca: v.marca, modelo: v.modelo, key: `${v.marca} ${v.modelo}`, _id: v._id.toString() }
-            ])
-        ).values()]
+        // Lista de modelos disponibles para el selector
+        const modelosDisponibles = [...new Set(vehiculos.map(v => ({
+            marca: v.marca,
+            modelo: v.modelo,
+            key: `${v.marca} ${v.modelo}`
+        })).map(v => JSON.stringify(v)))].map(v => JSON.parse(v))
 
         res.status(200).json({ tendencia, modelos: modelosDisponibles })
 

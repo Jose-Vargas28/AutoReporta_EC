@@ -25,6 +25,8 @@ export const exportarReportesExcel = (token, filtros = {}) => {
     const params = {}
     if (filtros.busqueda) params.busqueda = filtros.busqueda
     if (filtros.gravedad) params.gravedad = filtros.gravedad
+    if (filtros.marca) params.marca = filtros.marca
+    if (filtros.anio) params.anio = filtros.anio
     const query = new URLSearchParams(params).toString()
     return descargarBlob(
         `${API}/exportar/reportes-excel${query ? `?${query}` : ""}`,

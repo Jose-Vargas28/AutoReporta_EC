@@ -25,6 +25,11 @@ const VerReportes = () => {
     const [vehiculoNombre, setVehiculoNombre] = useState("")
     const [busqueda, setBusqueda] = useState("")
     const [gravedad, setGravedad] = useState("")
+    const [marcaFiltro, setMarcaFiltro] = useState("")
+    const [anioFiltro, setAnioFiltro] = useState("")
+    const [orden, setOrden] = useState("reciente")
+    const [marcasDisponibles, setMarcasDisponibles] = useState([])
+    const [aniosDisponibles, setAniosDisponibles] = useState([])
     const [cargando, setCargando] = useState(true)
     const [pagina, setPagina] = useState(1)
     const [totalPaginas, setTotalPaginas] = useState(1)
@@ -34,13 +39,16 @@ const VerReportes = () => {
     const [modalEliminarPropio, setModalEliminarPropio] = useState(null)
     const [exportando, setExportando] = useState(false)
 
-    const cargar = useCallback(async (pag = 1, busq = "", grav = "", vehId = "") => {
+    const cargar = useCallback(async (pag = 1, busq = "", grav = "", vehId = "", marc = "", an = "", ord = "reciente") => {
         setCargando(true)
         try {
             const params = new URLSearchParams({ pagina: pag })
             if (busq) params.append("busqueda", busq)
             if (grav) params.append("gravedad", grav)
             if (vehId) params.append("vehiculo", vehId)
+            if (marc) params.append("marca", marc)
+            if (an) params.append("anio", an)
+            if (ord && ord !== "reciente") params.append("orden", ord)
             const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/reportes?${params}`)
             setReportes(res.data.reportes || [])
             setTotalPaginas(res.data.paginas || 1)
@@ -56,49 +64,73 @@ const VerReportes = () => {
         setCargando(false)
     }, [])
 
+    // Cargar marcas y años disponibles para los selectores (una sola vez)
     useEffect(() => {
-        cargar(1, busqueda, gravedad, vehiculoFiltroId)
+        const cargarFiltros = async () => {
+            try {
+                const headers = token ? { Authorization: `Bearer ${token}` } : {}
+                const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/vehiculos/selector`, { headers })
+                const vehiculos = res.data.vehiculos || []
+                setMarcasDisponibles([...new Set(vehiculos.map(v => v.marca))].sort())
+                setAniosDisponibles([...new Set(vehiculos.map(v => v.anio))].sort((a, b) => b - a))
+            } catch { /* silencioso */ }
+        }
+        cargarFiltros()
+    }, [])
+
+    useEffect(() => {
+        cargar(1, busqueda, gravedad, vehiculoFiltroId, marcaFiltro, anioFiltro, orden)
     }, [vehiculoFiltroId])
 
     useEffect(() => {
         if (vehiculoFiltroId) return
         const timer = setTimeout(() => {
             setPagina(1)
-            cargar(1, busqueda, gravedad, "")
+            cargar(1, busqueda, gravedad, "", marcaFiltro, anioFiltro, orden)
         }, 400)
         return () => clearTimeout(timer)
-    }, [busqueda, gravedad])
+    }, [busqueda, gravedad, marcaFiltro, anioFiltro, orden])
 
     const cambiarPagina = (nuevaPagina) => {
         setPagina(nuevaPagina)
-        cargar(nuevaPagina, busqueda, gravedad, vehiculoFiltroId)
+        cargar(nuevaPagina, busqueda, gravedad, vehiculoFiltroId, marcaFiltro, anioFiltro, orden)
     }
 
     const limpiarFiltroVehiculo = () => {
         setSearchParams({})
         setVehiculoNombre("")
         setPagina(1)
-        cargar(1, "", "", "")
+        cargar(1, "", "", "", marcaFiltro, anioFiltro, orden)
+    }
+
+    const limpiarTodosFiltros = () => {
+        setBusqueda("")
+        setGravedad("")
+        setMarcaFiltro("")
+        setAnioFiltro("")
+        setOrden("reciente")
+        setPagina(1)
+        cargar(1, "", "", vehiculoFiltroId, "", "", "reciente")
     }
 
     const handleEliminarPropio = async () => {
         const headers = { Authorization: `Bearer ${token}` }
         const url = `${import.meta.env.VITE_BACKEND_URL}/reportes/${modalEliminarPropio._id}`
         const res = await fetchDataBackend(url, undefined, "DELETE", headers)
-        if (res) { setModalEliminarPropio(null); cargar(pagina, busqueda, gravedad, vehiculoFiltroId) }
+        if (res) { setModalEliminarPropio(null); cargar(pagina, busqueda, gravedad, vehiculoFiltroId, marcaFiltro, anioFiltro, orden) }
     }
 
     const handleEliminar = async (motivo) => {
         const headers = { Authorization: `Bearer ${token}` }
         const url = `${import.meta.env.VITE_BACKEND_URL}/reportes/${modalEliminar._id}`
         const res = await fetchDataBackend(url, { motivo }, "DELETE", headers)
-        if (res) { setModalEliminar(null); cargar(pagina, busqueda, gravedad, vehiculoFiltroId) }
+        if (res) { setModalEliminar(null); cargar(pagina, busqueda, gravedad, vehiculoFiltroId, marcaFiltro, anioFiltro, orden) }
     }
 
     const handleExportarExcel = async () => {
         setExportando(true)
         try {
-            await exportarReportesExcel(token, { busqueda, gravedad })
+            await exportarReportesExcel(token, { busqueda, gravedad, marca: marcaFiltro, anio: anioFiltro })
         } catch (error) {
             toast.error("Error al exportar a Excel")
         }
@@ -157,6 +189,19 @@ const VerReportes = () => {
                     <input type="text" placeholder="Buscar por marca, modelo o falla..."
                         className="flex-1 min-w-48 rounded-md border border-slate-300 focus:border-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-700 py-2 px-3 text-slate-700"
                         value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+
+                    <select className="rounded-md border border-slate-300 focus:border-blue-700 focus:outline-none py-2 px-3 text-slate-700"
+                        value={marcaFiltro} onChange={(e) => setMarcaFiltro(e.target.value)}>
+                        <option value="">Todas las marcas</option>
+                        {marcasDisponibles.map(m => <option key={m} value={m}>{m}</option>)}
+                    </select>
+
+                    <select className="rounded-md border border-slate-300 focus:border-blue-700 focus:outline-none py-2 px-3 text-slate-700"
+                        value={anioFiltro} onChange={(e) => setAnioFiltro(e.target.value)}>
+                        <option value="">Todos los años</option>
+                        {aniosDisponibles.map(a => <option key={a} value={a}>{a}</option>)}
+                    </select>
+
                     <select className="rounded-md border border-slate-300 focus:border-blue-700 focus:outline-none py-2 px-3 text-slate-700"
                         value={gravedad} onChange={(e) => setGravedad(e.target.value)}>
                         <option value="">Todas las gravedades</option>
@@ -164,8 +209,15 @@ const VerReportes = () => {
                         <option value="media">Media</option>
                         <option value="alta">Alta</option>
                     </select>
-                    {(busqueda || gravedad) && (
-                        <button type="button" onClick={() => { setBusqueda(""); setGravedad("") }}
+
+                    <select className="rounded-md border border-slate-300 focus:border-blue-700 focus:outline-none py-2 px-3 text-slate-700"
+                        value={orden} onChange={(e) => setOrden(e.target.value)}>
+                        <option value="reciente">Más reciente</option>
+                        <option value="antiguo">Más antiguo</option>
+                    </select>
+
+                    {(busqueda || gravedad || marcaFiltro || anioFiltro || orden !== "reciente") && (
+                        <button type="button" onClick={limpiarTodosFiltros}
                             className="px-3 py-2 text-sm text-slate-500 hover:text-slate-700 hover:underline">
                             Limpiar filtros
                         </button>
