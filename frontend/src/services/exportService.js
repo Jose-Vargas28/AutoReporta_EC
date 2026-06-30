@@ -44,3 +44,6 @@ export const exportarReportePDF = (token, id) =>
 // Exporta los propios reportes del usuario a Excel.
 export const exportarMisReportesExcel = (token) =>
     descargarBlob(`${API}/exportar/mis-reportes-excel`, token, `mis-reportes-${Date.now()}.xlsx`)
+// Ficha de vehículo estilo Consumer Reports (usuario logueado)
+export const exportarFichaVehiculo = (token, vehiculoId) =>
+    descargarBlob(`${API}/exportar/ficha-vehiculo/${vehiculoId}/pdf`, token, `ficha-vehiculo-${vehiculoId}.pdf`)

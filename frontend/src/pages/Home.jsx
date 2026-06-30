@@ -58,14 +58,10 @@ const HomeContactoForm = () => {
 
 // =============================================================
 //  ÍCONOS DE REDES SOCIALES (footer)
-//  Mismo patrón que en Logo.jsx: cuando tengas los logos reales,
-//  colócalos en src/assets/ y descomenta las líneas de abajo
-//  (una por cada red que vayas a usar).
+//  Implementados como SVG inline — apuntan a la página principal
+//  de cada red. Cuando crees las cuentas reales, solo cambia el
+//  href de cada <a> en el footer por la URL de tu perfil.
 // =============================================================
-// import facebookImg from "../assets/facebook.png"
-// import instagramImg from "../assets/instagram.png"
-// import xImg from "../assets/x.png"
-// import whatsappImg from "../assets/whatsapp.png"
 
 // Búsqueda de foto de stock cuando un vehículo no tiene fotos reales subidas
 // (misma función y misma key que ya usan Confiabilidad.jsx y CatalogoVehiculos.jsx)
@@ -433,29 +429,33 @@ const Home = () => {
                         </a>
                     </div>
 
-                    {/*
-                        TODO: cuando tengas los logos reales, descomenta los imports de arriba
-                        y reemplaza el contenido de cada <a> por:
-                        <img src={facebookImg} alt="Facebook" className="w-5 h-5" />
-                        (y así con instagramImg, xImg, whatsappImg). También actualiza los
-                        enlaces reales en theme.js (theme.contacto.facebook, etc.)
-                    */}
+                    {/* Redes sociales — apuntan a la página principal de cada red.
+                        Cuando crees las cuentas reales, solo cambia el href de cada <a>
+                        por la URL de tu perfil/página específica. */}
                     <div className="flex gap-2">
-                        <a href={theme.contacto.facebook} target="_blank" rel="noreferrer" title="Facebook"
-                            className="w-8 h-8 bg-slate-700 hover:bg-slate-600 rounded-full flex items-center justify-center transition-colors text-xs font-bold">
-                            FB
+                        <a href="https://www.facebook.com" target="_blank" rel="noreferrer" title="Facebook"
+                            className="w-8 h-8 bg-slate-700 hover:bg-blue-600 rounded-full flex items-center justify-center transition-colors">
+                            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white">
+                                <path d="M22 12.06C22 6.5 17.5 2 12 2S2 6.5 2 12.06c0 5 3.66 9.13 8.44 9.88v-7H7.9v-2.88h2.54V9.83c0-2.5 1.49-3.89 3.78-3.89 1.1 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56v1.87h2.77l-.44 2.88h-2.33v7c4.78-.75 8.44-4.88 8.44-9.88z" />
+                            </svg>
                         </a>
-                        <a href={theme.contacto.instagram} target="_blank" rel="noreferrer" title="Instagram"
-                            className="w-8 h-8 bg-slate-700 hover:bg-slate-600 rounded-full flex items-center justify-center transition-colors text-xs font-bold">
-                            IG
+                        <a href="https://www.instagram.com" target="_blank" rel="noreferrer" title="Instagram"
+                            className="w-8 h-8 bg-slate-700 hover:bg-pink-600 rounded-full flex items-center justify-center transition-colors">
+                            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white">
+                                <path d="M12 2.16c3.2 0 3.58.01 4.85.07 3.25.15 4.77 1.69 4.92 4.92.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.15 3.23-1.66 4.77-4.92 4.92-1.27.06-1.64.07-4.85.07s-3.58-.01-4.85-.07c-3.26-.15-4.77-1.7-4.92-4.92-.06-1.27-.07-1.65-.07-4.85s.02-3.58.07-4.85c.15-3.23 1.67-4.77 4.92-4.92 1.27-.05 1.65-.07 4.85-.07zM12 0C8.74 0 8.33.01 7.05.07c-4.35.2-6.78 2.62-6.98 6.98C0 8.33 0 8.74 0 12s.01 3.67.07 4.95c.2 4.36 2.62 6.78 6.98 6.98C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c4.35-.2 6.78-2.62 6.98-6.98.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.2-4.35-2.62-6.78-6.98-6.98C15.67.01 15.26 0 12 0zm0 5.84A6.16 6.16 0 1 0 18.16 12 6.16 6.16 0 0 0 12 5.84zM12 16a4 4 0 1 1 4-4 4 4 0 0 1-4 4zm6.4-11.84a1.44 1.44 0 1 0 1.44 1.44 1.44 1.44 0 0 0-1.44-1.44z" />
+                            </svg>
                         </a>
-                        <a href={theme.contacto.twitter} target="_blank" rel="noreferrer" title="X (Twitter)"
-                            className="w-8 h-8 bg-slate-700 hover:bg-slate-600 rounded-full flex items-center justify-center transition-colors text-xs font-bold">
-                            X
+                        <a href="https://www.x.com" target="_blank" rel="noreferrer" title="X (Twitter)"
+                            className="w-8 h-8 bg-slate-700 hover:bg-black rounded-full flex items-center justify-center transition-colors">
+                            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white">
+                                <path d="M18.9 1.92h3.68l-8.04 9.19L24 22.08h-7.41l-5.8-7.58-6.64 7.58H.46l8.6-9.83L0 1.92h7.59l5.24 6.93zM17.6 19.98h2.04L6.49 3.99H4.3z" />
+                            </svg>
                         </a>
-                        <a href={theme.contacto.whatsapp} target="_blank" rel="noreferrer" title="WhatsApp"
-                            className="w-8 h-8 bg-slate-700 hover:bg-slate-600 rounded-full flex items-center justify-center transition-colors text-xs font-bold">
-                            WA
+                        <a href="https://www.whatsapp.com" target="_blank" rel="noreferrer" title="WhatsApp"
+                            className="w-8 h-8 bg-slate-700 hover:bg-green-600 rounded-full flex items-center justify-center transition-colors">
+                            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-white">
+                                <path d="M17.5 14.38c-.25-.13-1.47-.72-1.7-.81-.23-.08-.4-.13-.56.13-.17.25-.65.81-.8.97-.14.17-.3.19-.55.06-.25-.12-1.05-.39-2-1.24-.74-.66-1.24-1.48-1.39-1.73-.14-.25-.02-.38.11-.5.12-.13.27-.33.4-.5.13-.16.18-.28.27-.46.08-.18.04-.34-.03-.47-.08-.13-.6-1.45-.82-1.99-.22-.52-.45-.45-.62-.46h-.53c-.18 0-.46.07-.7.34-.25.27-.95.93-.95 2.26 0 1.34.97 2.63 1.1 2.81.14.18 1.9 2.91 4.62 3.96 2.71 1.06 2.71.7 3.2.66.5-.05 1.6-.66 1.83-1.29.23-.63.23-1.17.16-1.29-.06-.13-.24-.2-.5-.32zM12.04 2C6.55 2 2.1 6.45 2.1 11.94c0 1.94.55 3.75 1.5 5.29L2 22l4.93-1.55a9.85 9.85 0 0 0 5.11 1.4h.01c5.49 0 9.94-4.45 9.94-9.94S17.53 2 12.04 2z" />
+                            </svg>
                         </a>
                     </div>
                 </div>

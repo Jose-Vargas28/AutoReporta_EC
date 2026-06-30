@@ -421,29 +421,43 @@ export const estadisticas = async (req, res) => {
         const modeloMap = {}
         const fallaMap = {}
         const gravedadMap = { baja: 0, media: 0, alta: 0 }
+        const regionMap = {}
+        const mesMap = {}
 
         reportes.forEach(r => {
             const marca = r.vehiculo?.marca || "N/D"
             const modelo = r.vehiculo ? `${r.vehiculo.marca} ${r.vehiculo.modelo}` : "N/D"
             const falla = r.falla?.nombre || "N/D"
+            const region = r.usuario?.region || "No especificada"
+            const fecha = new Date(r.createdAt)
+            const mes = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}`
 
             marcaMap[marca] = (marcaMap[marca] || 0) + 1
             modeloMap[modelo] = (modeloMap[modelo] || 0) + 1
             fallaMap[falla] = (fallaMap[falla] || 0) + 1
+            regionMap[region] = (regionMap[region] || 0) + 1
+            mesMap[mes] = (mesMap[mes] || 0) + 1
             if (r.gravedad) gravedadMap[r.gravedad] = (gravedadMap[r.gravedad] || 0) + 1
         })
 
-        const aArray = (obj) => Object.entries(obj)
+        const aArray = (obj, limit = 10) => Object.entries(obj)
             .map(([k, v]) => ({ _id: k, total: v }))
             .sort((a, b) => b.total - a.total)
-            .slice(0, 10)
+            .slice(0, limit)
+
+        const porMesOrdenado = Object.entries(mesMap)
+            .map(([k, v]) => ({ _id: k, total: v }))
+            .sort((a, b) => a._id.localeCompare(b._id))
+            .slice(-12) // últimos 12 meses
 
         res.status(200).json({
             total: reportes.length,
             porMarca: aArray(marcaMap),
             porModelo: aArray(modeloMap),
             porTipoFalla: aArray(fallaMap),
-            porGravedad: Object.entries(gravedadMap).map(([k, v]) => ({ _id: k, total: v }))
+            porGravedad: Object.entries(gravedadMap).map(([k, v]) => ({ _id: k, total: v })),
+            porRegion: aArray(regionMap, 20),
+            porMes: porMesOrdenado
         })
 
     } catch (error) {
@@ -499,12 +513,13 @@ export const tendencias = async (req, res) => {
                 .sort((a, b) => a.anio - b.anio)
         }))
 
-        // Lista de modelos disponibles para el selector
-        const modelosDisponibles = [...new Set(vehiculos.map(v => ({
-            marca: v.marca,
-            modelo: v.modelo,
-            key: `${v.marca} ${v.modelo}`
-        })).map(v => JSON.stringify(v)))].map(v => JSON.parse(v))
+        // Lista de modelos disponibles para el selector — incluye _id para ficha PDF
+        const modelosDisponibles = [...new Map(
+            vehiculos.map(v => [
+                `${v.marca}|${v.modelo}`,
+                { marca: v.marca, modelo: v.modelo, key: `${v.marca} ${v.modelo}`, _id: v._id.toString() }
+            ])
+        ).values()]
 
         res.status(200).json({ tendencia, modelos: modelosDisponibles })
 

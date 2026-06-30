@@ -180,13 +180,19 @@ const DetalleReporte = () => {
                     )}
 
                     {/* Acciones del admin */}
-                    {rol === "admin" && (
+                    {/* Botón PDF — cualquier usuario logueado en reportes validados */}
+                    {reporte.validado && (
                         <div className="mt-4 pt-4 border-t border-slate-100">
-                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Acciones de administrador</p>
                             <button type="button" onClick={handleExportarPDF} disabled={exportandoPDF}
                                 className="w-full mb-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
                                 {exportandoPDF ? "Generando PDF..." : "📄 Descargar constancia en PDF"}
                             </button>
+                        </div>
+                    )}
+
+                    {rol === "admin" && (
+                        <div className={`${!reporte.validado ? "mt-4 pt-4 border-t border-slate-100" : ""}`}>
+                            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Acciones de administrador</p>
                             {!reporte.validado ? (
                                 <div className="flex flex-col gap-2">
                                     <button type="button" onClick={() => setModalValidar(true)}
