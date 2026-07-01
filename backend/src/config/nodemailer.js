@@ -1,22 +1,23 @@
-import { TransactionalEmailsApi, TransactionalEmailsApiApiKeys, SendSmtpEmail } from "@getbrevo/brevo"
+import axios from "axios"
 import dotenv from "dotenv"
 dotenv.config()
-
-// Cliente Brevo — API HTTP, funciona en Railway sin necesidad de dominio propio
-const brevoClient = new TransactionalEmailsApi()
-brevoClient.setApiKey(TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY)
 
 const FROM_NAME = "AutoReporta EC"
 const FROM_EMAIL = process.env.BREVO_FROM_EMAIL || "josemvargas.28@gmail.com"
 
-// Función auxiliar que envía el correo vía Brevo
+// Envía un correo vía Brevo API HTTP — sin SDK, sin SMTP, funciona en Railway
 const enviarCorreo = async ({ to, subject, html }) => {
-    const email = new SendSmtpEmail()
-    email.sender = { name: FROM_NAME, email: FROM_EMAIL }
-    email.to = [{ email: to }]
-    email.subject = subject
-    email.htmlContent = html
-    return brevoClient.sendTransacEmail(email)
+    await axios.post("https://api.brevo.com/v3/smtp/email", {
+        sender: { name: FROM_NAME, email: FROM_EMAIL },
+        to: [{ email: to }],
+        subject,
+        htmlContent: html
+    }, {
+        headers: {
+            "api-key": process.env.BREVO_API_KEY,
+            "Content-Type": "application/json"
+        }
+    })
 }
 
 // Normalizar URL_FRONTEND: siempre con barra al final para construir enlaces en los correos.
@@ -221,12 +222,12 @@ const sendMailReporteDevuelto = async (userMail, userName, vehiculo, falla, obse
 // Mensaje de contacto
 const sendMailContacto = async ({ nombre, correo, asunto, mensaje }) => {
     try {
-        const emailContacto = new SendSmtpEmail()
-        emailContacto.sender = { name: FROM_NAME, email: FROM_EMAIL }
-        emailContacto.to = [{ email: process.env.ADMIN_CORREO_CONTACTO || FROM_EMAIL }]
-        emailContacto.replyTo = { email: correo, name: nombre }
-        emailContacto.subject = `📬 Contacto: ${asunto} — AutoReporta EC`
-        emailContacto.htmlContent = `
+        await axios.post("https://api.brevo.com/v3/smtp/email", {
+            sender: { name: FROM_NAME, email: FROM_EMAIL },
+            to: [{ email: process.env.ADMIN_CORREO_CONTACTO || FROM_EMAIL }],
+            replyTo: { email: correo, name: nombre },
+            subject: `📬 Contacto: ${asunto} — AutoReporta EC`,
+            htmlContent: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
                 <div style="background:#1e3a8a; padding:24px; text-align:center;">
                     <h1 style="color:white; margin:0; font-size:24px;">AutoReporta EC</h1>
@@ -247,8 +248,13 @@ const sendMailContacto = async ({ nombre, correo, asunto, mensaje }) => {
                 <div style="background:#f8fafc; padding:16px; text-align:center; color:#94a3b8; font-size:12px;">
                     AutoReporta EC — Reportes vehiculares colaborativos del Ecuador
                 </div>
-            </div>`
-        await brevoClient.sendTransacEmail(emailContacto)
+            </div>`,
+        }, {
+            headers: {
+                "api-key": process.env.BREVO_API_KEY,
+                "Content-Type": "application/json"
+            }
+        })
         console.log('Correo de contacto enviado')
     } catch (error) {
         console.error("Error al enviar correo de contacto:", error)
