@@ -1,10 +1,23 @@
-import { Resend } from "resend"
+import * as Brevo from "@getbrevo/brevo"
 import dotenv from "dotenv"
 dotenv.config()
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Cliente Brevo — API HTTP, funciona en Railway sin necesidad de dominio propio
+const brevoClient = new Brevo.TransactionalEmailsApi()
+brevoClient.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY)
 
-const FROM = "AutoReporta EC <onboarding@resend.dev>"
+const FROM_NAME = "AutoReporta EC"
+const FROM_EMAIL = process.env.BREVO_FROM_EMAIL || "josemvargas.28@gmail.com"
+
+// Función auxiliar que envía el correo vía Brevo
+const enviarCorreo = async ({ to, subject, html }) => {
+    const email = new Brevo.SendSmtpEmail()
+    email.sender = { name: FROM_NAME, email: FROM_EMAIL }
+    email.to = [{ email: to }]
+    email.subject = subject
+    email.htmlContent = html
+    return brevoClient.sendTransacEmail(email)
+}
 
 // Normalizar URL_FRONTEND: siempre con barra al final para construir enlaces en los correos.
 const BASE_URL = (process.env.URL_FRONTEND || "http://localhost:5173").replace(/\/?$/, "/")
@@ -12,11 +25,7 @@ const BASE_URL = (process.env.URL_FRONTEND || "http://localhost:5173").replace(/
 // Confirmación de cuenta
 const sendMailToConfirm = async (userMail, token) => {
     try {
-        const { data, error } = await resend.emails.send({
-            from: FROM,
-            to: userMail,
-            subject: "Confirma tu cuenta - AutoReporta EC 🚗",
-            html: `
+        await enviarCorreo({ to: userMail, subject: "Confirma tu cuenta - AutoReporta EC 🚗", html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
                 <div style="background:#1e3a8a; padding:24px; text-align:center;">
                     <h1 style="color:white; margin:0; font-size:24px;">AutoReporta EC</h1>
@@ -35,10 +44,8 @@ const sendMailToConfirm = async (userMail, token) => {
                 <div style="background:#f8fafc; padding:16px; text-align:center; color:#94a3b8; font-size:12px;">
                     AutoReporta EC — Reportes vehiculares colaborativos del Ecuador
                 </div>
-            </div>`
-        })
-        if (error) console.error("Error al enviar correo de confirmación:", error)
-        else console.log("Correo de confirmación enviado:", data?.id)
+            </div>` })
+        console.log('Correo enviado correctamente')
     } catch (error) {
         console.error("Error al enviar correo de confirmación:", error)
     }
@@ -47,11 +54,7 @@ const sendMailToConfirm = async (userMail, token) => {
 // Recuperación de contraseña
 const sendMailToRecovery = async (userMail, token) => {
     try {
-        const { data, error } = await resend.emails.send({
-            from: FROM,
-            to: userMail,
-            subject: "Recupera tu contraseña - AutoReporta EC 🔑",
-            html: `
+        await enviarCorreo({ to: userMail, subject: "Recupera tu contraseña - AutoReporta EC 🔑", html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
                 <div style="background:#1e3a8a; padding:24px; text-align:center;">
                     <h1 style="color:white; margin:0; font-size:24px;">AutoReporta EC</h1>
@@ -70,10 +73,8 @@ const sendMailToRecovery = async (userMail, token) => {
                 <div style="background:#f8fafc; padding:16px; text-align:center; color:#94a3b8; font-size:12px;">
                     AutoReporta EC — Reportes vehiculares colaborativos del Ecuador
                 </div>
-            </div>`
-        })
-        if (error) console.error("Error al enviar correo de recuperación:", error)
-        else console.log("Correo de recuperación enviado:", data?.id)
+            </div>` })
+        console.log('Correo enviado correctamente')
     } catch (error) {
         console.error("Error al enviar correo de recuperación:", error)
         throw error
@@ -83,11 +84,7 @@ const sendMailToRecovery = async (userMail, token) => {
 // Reporte verificado
 const sendMailReporteVerificado = async (userMail, userName, vehiculo, falla, reporteId) => {
     try {
-        const { data, error } = await resend.emails.send({
-            from: FROM,
-            to: userMail,
-            subject: "✅ Tu reporte fue validado - AutoReporta EC",
-            html: `
+        await enviarCorreo({ to: userMail, subject: "✅ Tu reporte fue validado - AutoReporta EC", html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
                 <div style="background:#1e3a8a; padding:24px; text-align:center;">
                     <h1 style="color:white; margin:0; font-size:24px;">AutoReporta EC</h1>
@@ -111,10 +108,8 @@ const sendMailReporteVerificado = async (userMail, userName, vehiculo, falla, re
                 <div style="background:#f8fafc; padding:16px; text-align:center; color:#94a3b8; font-size:12px;">
                     AutoReporta EC — Reportes vehiculares colaborativos del Ecuador
                 </div>
-            </div>`
-        })
-        if (error) console.error("Error al enviar correo de verificación:", error)
-        else console.log("Correo de verificación enviado:", data?.id)
+            </div>` })
+        console.log('Correo enviado correctamente')
     } catch (error) {
         console.error("Error al enviar correo de verificación:", error)
     }
@@ -123,11 +118,7 @@ const sendMailReporteVerificado = async (userMail, userName, vehiculo, falla, re
 // Reporte invalidado
 const sendMailReporteInvalidado = async (userMail, userName, vehiculo, falla, motivo) => {
     try {
-        const { data, error } = await resend.emails.send({
-            from: FROM,
-            to: userMail,
-            subject: "⚠️ La validación de tu reporte fue retirada - AutoReporta EC",
-            html: `
+        await enviarCorreo({ to: userMail, subject: "⚠️ La validación de tu reporte fue retirada - AutoReporta EC", html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
                 <div style="background:#1e3a8a; padding:24px; text-align:center;">
                     <h1 style="color:white; margin:0; font-size:24px;">AutoReporta EC</h1>
@@ -149,10 +140,8 @@ const sendMailReporteInvalidado = async (userMail, userName, vehiculo, falla, mo
                 <div style="background:#f8fafc; padding:16px; text-align:center; color:#94a3b8; font-size:12px;">
                     AutoReporta EC — Reportes vehiculares colaborativos del Ecuador
                 </div>
-            </div>`
-        })
-        if (error) console.error("Error al enviar correo de invalidación:", error)
-        else console.log("Correo de invalidación enviado:", data?.id)
+            </div>` })
+        console.log('Correo enviado correctamente')
     } catch (error) {
         console.error("Error al enviar correo de invalidación:", error)
     }
@@ -161,11 +150,7 @@ const sendMailReporteInvalidado = async (userMail, userName, vehiculo, falla, mo
 // Reporte eliminado
 const sendMailReporteEliminado = async (userMail, userName, vehiculo, falla, motivo) => {
     try {
-        const { data, error } = await resend.emails.send({
-            from: FROM,
-            to: userMail,
-            subject: "❌ Tu reporte fue eliminado - AutoReporta EC",
-            html: `
+        await enviarCorreo({ to: userMail, subject: "❌ Tu reporte fue eliminado - AutoReporta EC", html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
                 <div style="background:#1e3a8a; padding:24px; text-align:center;">
                     <h1 style="color:white; margin:0; font-size:24px;">AutoReporta EC</h1>
@@ -187,10 +172,8 @@ const sendMailReporteEliminado = async (userMail, userName, vehiculo, falla, mot
                 <div style="background:#f8fafc; padding:16px; text-align:center; color:#94a3b8; font-size:12px;">
                     AutoReporta EC — Reportes vehiculares colaborativos del Ecuador
                 </div>
-            </div>`
-        })
-        if (error) console.error("Error al enviar correo de eliminación:", error)
-        else console.log("Correo de eliminación enviado:", data?.id)
+            </div>` })
+        console.log('Correo enviado correctamente')
     } catch (error) {
         console.error("Error al enviar correo de eliminación:", error)
     }
@@ -199,11 +182,7 @@ const sendMailReporteEliminado = async (userMail, userName, vehiculo, falla, mot
 // Reporte devuelto con observación
 const sendMailReporteDevuelto = async (userMail, userName, vehiculo, falla, observacion, reporteId) => {
     try {
-        const { data, error } = await resend.emails.send({
-            from: FROM,
-            to: userMail,
-            subject: "↩️ Tu reporte necesita correcciones - AutoReporta EC",
-            html: `
+        await enviarCorreo({ to: userMail, subject: "↩️ Tu reporte necesita correcciones - AutoReporta EC", html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
                 <div style="background:#1e3a8a; padding:24px; text-align:center;">
                     <h1 style="color:white; margin:0; font-size:24px;">AutoReporta EC</h1>
@@ -232,10 +211,8 @@ const sendMailReporteDevuelto = async (userMail, userName, vehiculo, falla, obse
                 <div style="background:#f8fafc; padding:16px; text-align:center; color:#94a3b8; font-size:12px;">
                     AutoReporta EC — Reportes vehiculares colaborativos del Ecuador
                 </div>
-            </div>`
-        })
-        if (error) console.error("Error al enviar correo de devolución:", error)
-        else console.log("Correo de devolución enviado:", data?.id)
+            </div>` })
+        console.log('Correo enviado correctamente')
     } catch (error) {
         console.error("Error al enviar correo de devolución:", error)
     }
@@ -244,12 +221,12 @@ const sendMailReporteDevuelto = async (userMail, userName, vehiculo, falla, obse
 // Mensaje de contacto
 const sendMailContacto = async ({ nombre, correo, asunto, mensaje }) => {
     try {
-        const { data, error } = await resend.emails.send({
-            from: FROM,
-            to: process.env.ADMIN_CORREO_CONTACTO || process.env.USER_MAILTRAP,
-            replyTo: correo,
-            subject: `📬 Contacto: ${asunto} — AutoReporta EC`,
-            html: `
+        const emailContacto = new Brevo.SendSmtpEmail()
+        emailContacto.sender = { name: FROM_NAME, email: FROM_EMAIL }
+        emailContacto.to = [{ email: process.env.ADMIN_CORREO_CONTACTO || FROM_EMAIL }]
+        emailContacto.replyTo = { email: correo, name: nombre }
+        emailContacto.subject = `📬 Contacto: ${asunto} — AutoReporta EC`
+        emailContacto.htmlContent = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
                 <div style="background:#1e3a8a; padding:24px; text-align:center;">
                     <h1 style="color:white; margin:0; font-size:24px;">AutoReporta EC</h1>
@@ -271,9 +248,8 @@ const sendMailContacto = async ({ nombre, correo, asunto, mensaje }) => {
                     AutoReporta EC — Reportes vehiculares colaborativos del Ecuador
                 </div>
             </div>`
-        })
-        if (error) { console.error("Error al enviar correo de contacto:", error); throw error }
-        else console.log("Correo de contacto enviado:", data?.id)
+        await brevoClient.sendTransacEmail(emailContacto)
+        console.log('Correo de contacto enviado')
     } catch (error) {
         console.error("Error al enviar correo de contacto:", error)
         throw error
