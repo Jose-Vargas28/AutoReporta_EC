@@ -1,17 +1,17 @@
-import SibApiV3Sdk from "@getbrevo/brevo"
+import { TransactionalEmailsApi, TransactionalEmailsApiApiKeys, SendSmtpEmail } from "@getbrevo/brevo"
 import dotenv from "dotenv"
 dotenv.config()
 
 // Cliente Brevo — API HTTP, funciona en Railway sin necesidad de dominio propio
-const brevoClient = new SibApiV3Sdk.TransactionalEmailsApi()
-brevoClient.setApiKey(SibApiV3Sdk.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY)
+const brevoClient = new TransactionalEmailsApi()
+brevoClient.setApiKey(TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY)
 
 const FROM_NAME = "AutoReporta EC"
 const FROM_EMAIL = process.env.BREVO_FROM_EMAIL || "josemvargas.28@gmail.com"
 
 // Función auxiliar que envía el correo vía Brevo
 const enviarCorreo = async ({ to, subject, html }) => {
-    const email = new SibApiV3Sdk.SendSmtpEmail()
+    const email = new SendSmtpEmail()
     email.sender = { name: FROM_NAME, email: FROM_EMAIL }
     email.to = [{ email: to }]
     email.subject = subject
@@ -221,7 +221,7 @@ const sendMailReporteDevuelto = async (userMail, userName, vehiculo, falla, obse
 // Mensaje de contacto
 const sendMailContacto = async ({ nombre, correo, asunto, mensaje }) => {
     try {
-        const emailContacto = new SibApiV3Sdk.SendSmtpEmail()
+        const emailContacto = new SendSmtpEmail()
         emailContacto.sender = { name: FROM_NAME, email: FROM_EMAIL }
         emailContacto.to = [{ email: process.env.ADMIN_CORREO_CONTACTO || FROM_EMAIL }]
         emailContacto.replyTo = { email: correo, name: nombre }
