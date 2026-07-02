@@ -1,6 +1,7 @@
 import { Link } from "react-router"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import axios from "axios"
+import { toast, ToastContainer } from "react-toastify"
 import storeAuth from "../context/storeAuth"
 import storeProfile from "../context/storeProfile"
 
@@ -8,6 +9,15 @@ const DashboardHome = () => {
     const { rol, token } = storeAuth()
     const { user } = storeProfile()
     const [pendientes, setPendientes] = useState(null)
+    const toastShown = useRef(false)
+
+    useEffect(() => {
+        // Mostrar toast de bienvenida solo la primera vez que se monta
+        if (!toastShown.current && user?.nombre) {
+            toast.success(`¡Hola, ${user.nombre}! 👋`, { autoClose: 3000 })
+            toastShown.current = true
+        }
+    }, [user])
 
     useEffect(() => {
         if (rol !== "admin") return
@@ -30,6 +40,7 @@ const DashboardHome = () => {
 
     return (
         <div>
+            <ToastContainer />
             <h1 className="text-3xl font-bold text-slate-800 mb-2">
                 Bienvenido, {user?.nombre}
             </h1>

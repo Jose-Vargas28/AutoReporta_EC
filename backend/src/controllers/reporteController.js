@@ -293,7 +293,7 @@ export const eliminarReporte = async (req, res) => {
                 const vehiculo = reportePoblado?.vehiculo
                     ? `${reportePoblado.vehiculo.marca} ${reportePoblado.vehiculo.modelo} ${reportePoblado.vehiculo.anio}`
                     : "Vehículo"
-                const falla = reportePoblado?.falla?.nombre || "Falla reportada"
+                const falla = reportePoblado?.falla?.nombre || "Falla mecánica"
                 sendMailReporteEliminado(usuario.email, usuario.nombre, vehiculo, falla, motivo)
             }
         }
@@ -371,12 +371,14 @@ export const validarReporte = async (req, res) => {
         reporte.observadoEn = null
         await reporte.save()
 
+        // Populate para obtener datos reales del vehículo y la falla
+        const reportePop = await popReporte(Reporte.findById(reporte._id))
         const usuario = await User.findById(reporte.usuario)
         if (usuario?.email) {
-            const vehiculo = reporte.vehiculo
-                ? `${reporte.vehiculo.marca} ${reporte.vehiculo.modelo} ${reporte.vehiculo.anio}`
+            const vehiculo = reportePop.vehiculo
+                ? `${reportePop.vehiculo.marca} ${reportePop.vehiculo.modelo} ${reportePop.vehiculo.anio}`
                 : "Vehículo"
-            const falla = reporte.falla?.nombre || "Falla reportada"
+            const falla = reportePop.falla?.nombre || "Falla mecánica"
             sendMailReporteVerificado(usuario.email, usuario.nombre, vehiculo, falla, reporte._id)
         }
 

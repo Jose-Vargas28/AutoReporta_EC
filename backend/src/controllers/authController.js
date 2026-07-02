@@ -27,6 +27,27 @@ export const registro = async (req, res) => {
 
         const existe = await User.findOne({ email })
         if (existe) {
+            // Si la cuenta existe pero fue eliminada (se dio de baja), la reactivamos
+            // con los nuevos datos — el usuario recupera sus reportes y valoraciones anteriores
+            if (existe.eliminado) {
+                existe.nombre = nombre
+                existe.apellido = apellido
+                existe.password = await existe.encryptPassword(password)
+                existe.eliminado = false
+                existe.eliminadoEn = null
+                existe.baneado = false
+                existe.baneadoEn = null
+                existe.confirmEmail = false
+                existe.intentosFallidos = 0
+                existe.bloqueadoHasta = null
+                if (telefono)  existe.telefono  = telefono
+                if (region)    existe.region    = region
+                if (provincia) existe.provincia = provincia
+                const token = existe.crearToken()
+                await existe.save()
+                await sendMailToConfirm(email, token)
+                return res.status(200).json({ msg: "Revisa tu correo para confirmar tu cuenta" })
+            }
             return res.status(400).json({ msg: "El correo ya está registrado" })
         }
 

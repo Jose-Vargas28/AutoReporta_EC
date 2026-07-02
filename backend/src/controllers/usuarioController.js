@@ -130,6 +130,28 @@ export const desbanearUsuario = async (req, res) => {
     }
 }
 
+// DARSE DE BAJA (usuario logueado)
+// El usuario elimina su propia cuenta. Sus reportes validados permanecen
+// en la plataforma como información pública verificada.
+// Si se registra de nuevo con el mismo correo, la cuenta se reactiva completa.
+export const darmedeBaja = async (req, res) => {
+    try {
+        const usuario = await User.findById(req.userBDD._id)
+        if (!usuario) return res.status(404).json({ msg: "Usuario no encontrado" })
+        if (usuario.rol === "admin") return res.status(400).json({ msg: "Un administrador no puede darse de baja desde el perfil." })
+
+        usuario.eliminado = true
+        usuario.eliminadoEn = new Date()
+        // No se marca como baneado para permitir reactivación al registrarse de nuevo
+        await usuario.save()
+
+        res.status(200).json({ msg: "Tu cuenta ha sido eliminada. Tus reportes verificados permanecen en la plataforma." })
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({ msg: "Error al procesar la baja" })
+    }
+}
+
 // ELIMINAR USUARIO (borrado lógico)
 export const eliminarUsuario = async (req, res) => {
     try {

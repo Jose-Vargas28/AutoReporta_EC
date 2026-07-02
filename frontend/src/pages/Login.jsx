@@ -13,6 +13,7 @@ import loginBg from "../assets/login-bg.jpg"
 const Login = () => {
     const navigate = useNavigate()
     const [showPassword, setShowPassword] = useState(false)
+    const [cargando, setCargando] = useState(false)
     const [cuentaNoConfirmada, setCuentaNoConfirmada] = useState(false)
     const [correoIngresado, setCorreoIngresado] = useState("")
     const [reenviando, setReenviando] = useState(false)
@@ -26,6 +27,7 @@ const Login = () => {
     const onSubmit = async (data) => {
         setCuentaNoConfirmada(false)
         setMsgReenvio("")
+        setCargando(true)
         const url = `${import.meta.env.VITE_BACKEND_URL}/login`
         try {
             const res = await axios.post(url, data)
@@ -44,6 +46,7 @@ const Login = () => {
                 toast.error(msg || "No se pudo conectar al servidor")
             }
         }
+        setCargando(false)
     }
 
     const handleReenviar = async () => {
@@ -172,9 +175,18 @@ const Login = () => {
 
                         <button
                             type="submit"
-                            className="w-full bg-blue-900 hover:bg-blue-800 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors"
+                            disabled={cargando}
+                            className="w-full bg-blue-900 hover:bg-blue-800 disabled:opacity-70 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
                         >
-                            Iniciar sesión
+                            {cargando ? (
+                                <>
+                                    <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                                    </svg>
+                                    Ingresando...
+                                </>
+                            ) : "Iniciar sesión"}
                         </button>
                     </form>
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { ToastContainer, toast } from "react-toastify"
+import { useNavigate } from "react-router"
 import storeProfile from "../context/storeProfile"
 import storeAuth from "../context/storeAuth"
 import { regionesEcuador, provinciasPorRegion } from "../config/ecuador"
@@ -11,8 +12,11 @@ import ModalConfirmar from "../components/ui/ModalConfirmar"
 import axios from "axios"
 
 const Perfil = () => {
-    const { user, profile } = storeProfile()
-    const { rol, token } = storeAuth()
+    const { user, profile, clearUser } = storeProfile()
+    const { clearAuth, token, rol } = storeAuth()
+    const navigate = useNavigate()
+    const inputFotoRef = useRef(null)
+
     const [editandoPerfil, setEditandoPerfil] = useState(false)
     const [editandoPassword, setEditandoPassword] = useState(false)
     const [regionSeleccionada, setRegionSeleccionada] = useState("")
@@ -22,7 +26,8 @@ const Perfil = () => {
     const [archivoFoto, setArchivoFoto] = useState(null)
     const [subiendoFoto, setSubiendoFoto] = useState(false)
     const [confirmarEliminarFoto, setConfirmarEliminarFoto] = useState(false)
-    const inputFotoRef = useRef(null)
+    const [confirmarBaja, setConfirmarBaja] = useState(false)
+    const [procesandoBaja, setProcesandoBaja] = useState(false)
 
     const { register: regPerfil, handleSubmit: hsPerfil, reset: resetPerfil, setValue: setValPerfil, formState: { errors: errPerfil }, watch } = useForm()
     const { register: regPass, handleSubmit: hsPass, reset: resetPass, formState: { errors: errPass }, watch: watchPass } = useForm()
@@ -127,7 +132,25 @@ const Perfil = () => {
     const inputClass = "block w-full rounded-md border border-slate-300 focus:border-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-700 py-2 px-3 text-slate-700"
     const labelClass = "mb-2 block text-sm font-semibold text-slate-700"
 
-    return (
+    const handleDarmedeBaja = async () => {
+        setProcesandoBaja(true)
+        try {
+            await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/perfil/baja`, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            toast.success("Tu cuenta ha sido eliminada. Hasta pronto.")
+            setTimeout(() => {
+                clearAuth()
+                clearUser()
+                navigate("/")
+            }, 2000)
+        } catch (error) {
+            toast.error(error?.response?.data?.msg || "Error al procesar la baja")
+        }
+        setProcesandoBaja(false)
+    }
+
+        return (
         <>
         <div className="max-w-2xl mx-auto">
             <ToastContainer />
@@ -371,6 +394,28 @@ const Perfil = () => {
                 colorBoton="bg-red-600 hover:bg-red-700"
                 onConfirmar={eliminarFoto}
                 onCancelar={() => setConfirmarEliminarFoto(false)}
+            />
+        )}
+
+        {/* Zona de baja — solo para usuarios regulares */}
+        {rol !== "admin" && (
+            <div className="mt-10 pt-6 border-t border-slate-200">
+                <p className="text-xs text-slate-400 mb-2">Cuenta</p>
+                <button type="button" onClick={() => setConfirmarBaja(true)}
+                    className="text-sm text-red-500 hover:text-red-700 hover:underline transition-colors">
+                    Darme de baja
+                </button>
+            </div>
+        )}
+
+        {confirmarBaja && (
+            <ModalConfirmar
+                titulo="¿Deseas darte de baja?"
+                descripcion="Tu cuenta será eliminada permanentemente. Tus reportes que hayan sido validados NO serán borrados — permanecerán en la plataforma como información pública verificada de la comunidad."
+                textoConfirmar={procesandoBaja ? "Procesando..." : "Sí, darme de baja"}
+                colorBoton="bg-red-600 hover:bg-red-700"
+                onConfirmar={handleDarmedeBaja}
+                onCancelar={() => setConfirmarBaja(false)}
             />
         )}
         </>

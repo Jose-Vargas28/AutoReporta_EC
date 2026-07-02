@@ -4,6 +4,7 @@ import {
     banearUsuario,
     desbanearUsuario,
     eliminarUsuario,
+    darmedeBaja,
     obtenerPerfil,
     actualizarPerfil,
     cambiarPassword,
@@ -24,6 +25,7 @@ router.put("/perfil", verificarTokenJWT, actualizarPerfil)
 router.put("/perfil/password", verificarTokenJWT, cambiarPassword)
 router.post("/perfil/foto", verificarTokenJWT, subirFotoPerfil)
 router.delete("/perfil/foto", verificarTokenJWT, eliminarFotoPerfil)
+router.delete("/perfil/baja", verificarTokenJWT, darmedeBaja)
 
 // Solo admin
 router.get("/usuarios", verificarTokenJWT, soloAdmin, listarUsuarios)

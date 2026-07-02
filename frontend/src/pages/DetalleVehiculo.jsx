@@ -520,7 +520,12 @@ const DetalleVehiculo = () => {
                                     {token && puedeEliminar && (
                                         <button type="button"
                                             onClick={() => setModalEliminarEnlace(enlace)}
-                                            className="shrink-0 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 text-lg leading-none">
+                                            className={`shrink-0 transition-colors text-lg leading-none ${
+                                                esAdminUser
+                                                    ? "text-red-400 hover:text-red-600"
+                                                    : "text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100"
+                                            }`}
+                                            title="Eliminar enlace">
                                             ×
                                         </button>
                                     )}
